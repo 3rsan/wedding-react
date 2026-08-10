@@ -1,21 +1,16 @@
 import { useEffect, useState } from 'react';
-import Envelope from './components/Envelope';
-import Hero from './components/Hero';
-import RsvpForm from './components/RsvpForm';
-import Countdown from './components/Countdown';
-import Venues from './components/Venues';
-import Gallery from './components/Gallery';
-import { getWedding, getGuestInvite } from './api/client';
-import { useWeddingStore } from './store/useWeddingStore';
+import { useParams } from 'react-router-dom';
+import Envelope from '../components/Envelope';
+import Hero from '../components/Hero';
+import RsvpForm from '../components/RsvpForm';
+import Countdown from '../components/Countdown';
+import Venues from '../components/Venues';
+import Gallery from '../components/Gallery';
+import { getWedding, getGuestInvite } from '../api/client';
+import { useWeddingStore } from '../store/useWeddingStore';
 
-// URL yapısı: /{slug}/{token}  -> ör: /elena-marco/ax92kd81
-function useRouteParams() {
-  const parts = window.location.pathname.split('/').filter(Boolean);
-  return { slug: parts[0], token: parts[1] };
-}
-
-export default function App() {
-  const { slug, token } = useRouteParams();
+export default function WeddingInvite() {
+  const { slug, token } = useParams();
   const { wedding, guest, setWedding, setGuest, envelopeOpened } =
     useWeddingStore();
   const [loading, setLoading] = useState(true);

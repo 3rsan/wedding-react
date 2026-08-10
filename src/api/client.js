@@ -1,12 +1,33 @@
 import axios from 'axios';
 
-// Lokalde .env yoksa vite.config.js'teki proxy'ye düşer (/api -> localhost:8000)
-// Netlify'da VITE_API_URL ortam değişkeni Railway backend adresine ayarlanmalı
 const baseURL = import.meta.env.VITE_API_URL || '/api';
 
 export const api = axios.create({
   baseURL,
 });
+
+// Admin token'ı varsa her isteğe otomatik ekle
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// 401 gelirse (token geçersiz/süresi dolmuş) otomatik logout
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('admin_token');
+      window.location.href = '/admin/login';
+    }
+    return Promise.reject(error);
+  },
+);
+
+// --- Public endpoints (mevcut) ---
 
 export const getWedding = (slug) =>
   api.get(`/weddings/${slug}`).then((r) => r.data);
@@ -30,4 +51,43 @@ export const submitMemory = (slug, formData) =>
     .post(`/weddings/${slug}/memories`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
+    .then((r) => r.data);
+
+// --- Admin endpoints ---
+
+export const adminLogin = (email, password) =>
+  api.post('/admin/login', { email, password }).then((r) => {
+    localStorage.setItem('admin_token', r.data.token);
+    return r.data;
+  });
+
+export const adminLogout = () =>
+  api.post('/admin/logout').then(() => {
+    localStorage.removeItem('admin_token');
+  });
+
+export const getMe = () => api.get('/admin/me').then((r) => r.data);
+
+export const getGuests = (weddingId) =>
+  api.get(`/admin/weddings/${weddingId}/guests`).then((r) => r.data);
+
+export const createGuest = (weddingId, payload) =>
+  api.post(`/admin/weddings/${weddingId}/guests`, payload).then((r) => r.data);
+
+export const updateGuest = (weddingId, guestId, payload) =>
+  api
+    .put(`/admin/weddings/${weddingId}/guests/${guestId}`, payload)
+    .then((r) => r.data);
+
+export const deleteGuest = (weddingId, guestId) =>
+  api
+    .delete(`/admin/weddings/${weddingId}/guests/${guestId}`)
+    .then((r) => r.data);
+
+export const getDashboard = (weddingId) =>
+  api.get(`/admin/weddings/${weddingId}/dashboard`).then((r) => r.data);
+
+export const exportGuests = (weddingId) =>
+  api
+    .get(`/admin/weddings/${weddingId}/export`, { responseType: 'blob' })
     .then((r) => r.data);
