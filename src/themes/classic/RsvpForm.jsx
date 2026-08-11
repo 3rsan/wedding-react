@@ -1,29 +1,33 @@
-import { useState } from 'react'
-import { submitRsvp } from '../api/client'
+import { useState } from 'react';
+import { submitRsvp } from '../../api/client';
 
 export default function RsvpForm({ slug, token, guest }) {
-  const [attending, setAttending] = useState(true)
-  const [guestCount, setGuestCount] = useState(1)
-  const [note, setNote] = useState('')
-  const [status, setStatus] = useState('idle') // idle | sending | done | error
+  const [attending, setAttending] = useState(true);
+  const [guestCount, setGuestCount] = useState(1);
+  const [note, setNote] = useState('');
+  const [status, setStatus] = useState('idle'); // idle | sending | done | error
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setStatus('sending')
+    e.preventDefault();
+    setStatus('sending');
     try {
-      await submitRsvp(slug, token, { attending, guest_count: guestCount, note })
-      setStatus('done')
+      await submitRsvp(slug, token, {
+        attending,
+        guest_count: guestCount,
+        note,
+      });
+      setStatus('done');
     } catch {
-      setStatus('error')
+      setStatus('error');
     }
-  }
+  };
 
   if (status === 'done') {
     return (
       <p className="text-center text-[var(--color-primary)] font-medium py-6">
         Cevabınız kaydedildi, teşekkürler! 🎉
       </p>
-    )
+    );
   }
 
   return (
@@ -51,7 +55,9 @@ export default function RsvpForm({ slug, token, guest }) {
 
       {attending && (
         <div>
-          <label className="text-xs text-[var(--color-text)]/60">Kaç kişi geleceksiniz?</label>
+          <label className="text-xs text-[var(--color-text)]/60">
+            Kaç kişi geleceksiniz?
+          </label>
           <input
             type="number"
             min={1}
@@ -80,8 +86,10 @@ export default function RsvpForm({ slug, token, guest }) {
       </button>
 
       {status === 'error' && (
-        <p className="text-center text-red-500 text-xs">Bir hata oluştu, tekrar deneyin.</p>
+        <p className="text-center text-red-500 text-xs">
+          Bir hata oluştu, tekrar deneyin.
+        </p>
       )}
     </form>
-  )
+  );
 }

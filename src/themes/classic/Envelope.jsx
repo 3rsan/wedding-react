@@ -1,8 +1,8 @@
-import { motion, AnimatePresence } from 'framer-motion'
-import { useWeddingStore } from '../store/useWeddingStore'
+import { motion, AnimatePresence } from 'framer-motion';
+import { useWeddingStore } from '../../store/useWeddingStore';
 
 export default function Envelope({ groomName, brideName }) {
-  const { envelopeOpened, openEnvelope } = useWeddingStore()
+  const { envelopeOpened, openEnvelope } = useWeddingStore();
 
   return (
     <AnimatePresence>
@@ -44,5 +44,5 @@ export default function Envelope({ groomName, brideName }) {
         </motion.div>
       )}
     </AnimatePresence>
-  )
+  );
 }

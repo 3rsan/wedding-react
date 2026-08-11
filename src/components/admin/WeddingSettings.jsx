@@ -4,6 +4,7 @@ import {
   updateWeddingSettings,
   uploadCoverImage,
 } from '../../api/client';
+import { THEME_LIST } from '../../themes/registry';
 
 export default function WeddingSettings({ weddingId }) {
   const [settings, setSettings] = useState(null);
@@ -11,13 +12,27 @@ export default function WeddingSettings({ weddingId }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState('');
 
   useEffect(() => {
     getWeddingSettings(weddingId).then((data) => {
       setSettings(data);
       setColors(data.theme_colors || { primary: '', text: '', bg: '' });
+      setSelectedTheme(data.theme || 'classic');
     });
   }, [weddingId]);
+
+  const handleThemeSelect = async (themeId) => {
+    setSelectedTheme(themeId);
+    try {
+      await updateWeddingSettings(weddingId, { theme: themeId });
+      setMessage('Tema güncellendi.');
+    } catch {
+      setMessage('Tema kaydedilirken hata oluştu.');
+    } finally {
+      setTimeout(() => setMessage(''), 2000);
+    }
+  };
 
   const handleColorChange = (key, value) => {
     setColors((prev) => ({ ...prev, [key]: value }));
@@ -63,6 +78,46 @@ export default function WeddingSettings({ weddingId }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 space-y-6">
       <h2 className="text-lg font-semibold">Tasarım Ayarları</h2>
+
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-2">Tema</p>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          {THEME_LIST.map((theme) => {
+            const { Hero: ThemeHero } = theme.components;
+            return (
+              <button
+                key={theme.id}
+                onClick={() => handleThemeSelect(theme.id)}
+                className={`border rounded-lg overflow-hidden text-left text-sm transition ${
+                  selectedTheme === theme.id
+                    ? 'border-[var(--color-primary,#d4a04a)] ring-2 ring-[var(--color-primary,#d4a04a)]/30'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <div className="aspect-video bg-gray-50 overflow-hidden relative">
+                  <div
+                    className="absolute top-0 left-0 origin-top-left pointer-events-none"
+                    style={{
+                      width: '1200px',
+                      height: '800px',
+                      transform: 'scale(0.183)',
+                    }}
+                  >
+                    <ThemeHero
+                      groomName="Marco"
+                      brideName="Elena"
+                      weddingDate="2026-10-17"
+                      heroVideo={null}
+                      coverImageUrl={null}
+                    />
+                  </div>
+                </div>
+                <p className="p-2 font-medium">{theme.name}</p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div>
         <p className="text-sm font-medium text-gray-700 mb-2">Kapak Görseli</p>

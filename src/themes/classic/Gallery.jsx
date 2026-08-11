@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getMemories, submitMemory } from '../api/client';
+import { getMemories, submitMemory } from '../../api/client';
 
 function MemoryCard({ memory }) {
   return (

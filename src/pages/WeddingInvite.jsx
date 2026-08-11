@@ -1,13 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import Envelope from '../components/Envelope';
-import Hero from '../components/Hero';
-import RsvpForm from '../components/RsvpForm';
-import Countdown from '../components/Countdown';
-import Venues from '../components/Venues';
-import Gallery from '../components/Gallery';
 import { getWedding, getGuestInvite } from '../api/client';
 import { useWeddingStore } from '../store/useWeddingStore';
+import { getTheme } from '../themes/registry';
 
 export default function WeddingInvite() {
   const { slug, token } = useParams();
@@ -30,15 +25,11 @@ export default function WeddingInvite() {
 
   useEffect(() => {
     if (!wedding?.theme_colors) return;
-
     const root = document.documentElement;
     const { primary, text, bg } = wedding.theme_colors;
-
     if (primary) root.style.setProperty('--color-primary', primary);
     if (text) root.style.setProperty('--color-text', text);
     if (bg) root.style.setProperty('--color-bg', bg);
-
-    // Sayfa terk edildiğinde varsayılana dönmesi için temizlik (opsiyonel ama önerilir)
     return () => {
       root.style.removeProperty('--color-primary');
       root.style.removeProperty('--color-text');
@@ -57,6 +48,10 @@ export default function WeddingInvite() {
   if (!wedding) {
     return <p className="p-10 text-center">Davetiye bulunamadı.</p>;
   }
+
+  const theme = getTheme(wedding.theme);
+  const { Envelope, Hero, Venues, Gallery, RsvpForm, Countdown } =
+    theme.components;
 
   return (
     <>
