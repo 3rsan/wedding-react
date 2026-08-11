@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useParams, Navigate } from 'react-router-dom';
 import {
   getDashboard,
   getGuests,
@@ -14,6 +15,7 @@ import WeddingSettings from '../../components/admin/WeddingSettings';
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
+  const { weddingId: weddingIdParam } = useParams();
   const [stats, setStats] = useState(null);
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +23,11 @@ export default function AdminDashboard() {
   const [copiedId, setCopiedId] = useState(null);
   const [modalGuest, setModalGuest] = useState(undefined); // undefined: kapalı, null: yeni, obje: düzenle
 
-  const weddingId = user?.wedding?.id || 1;
+  const weddingId = weddingIdParam || user?.wedding?.id;
+
+  if (!weddingId) {
+    return <Navigate to="/admin/weddings" replace />;
+  }
 
   const loadData = () => {
     return Promise.all([getDashboard(weddingId), getGuests(weddingId)]).then(

@@ -16,8 +16,8 @@ export default function AdminLogin() {
     setSubmitting(true);
 
     try {
-      await login(email, password);
-      navigate('/admin');
+      const user = await login(email, password);
+      navigate(user.role === 'admin' ? '/admin/weddings' : '/admin');
     } catch (err) {
       setError(
         err.response?.data?.message ||

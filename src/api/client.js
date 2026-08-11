@@ -129,3 +129,8 @@ export const uploadCoverImage = (weddingId, file) => {
     })
     .then((r) => r.data);
 };
+
+export const getWeddings = () => api.get('/admin/weddings').then((r) => r.data);
+
+export const createWedding = (payload) =>
+  api.post('/admin/weddings', payload).then((r) => r.data);
