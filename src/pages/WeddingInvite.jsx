@@ -28,6 +28,24 @@ export default function WeddingInvite() {
       .finally(() => setLoading(false));
   }, [slug, token]);
 
+  useEffect(() => {
+    if (!wedding?.theme_colors) return;
+
+    const root = document.documentElement;
+    const { primary, text, bg } = wedding.theme_colors;
+
+    if (primary) root.style.setProperty('--color-primary', primary);
+    if (text) root.style.setProperty('--color-text', text);
+    if (bg) root.style.setProperty('--color-bg', bg);
+
+    // Sayfa terk edildiğinde varsayılana dönmesi için temizlik (opsiyonel ama önerilir)
+    return () => {
+      root.style.removeProperty('--color-primary');
+      root.style.removeProperty('--color-text');
+      root.style.removeProperty('--color-bg');
+    };
+  }, [wedding]);
+
   if (!slug) {
     return <p className="p-10 text-center">Geçersiz davetiye linki.</p>;
   }

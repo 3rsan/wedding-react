@@ -9,6 +9,8 @@ import {
 } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import GuestFormModal from './GuestFormModal';
+import MemoryModeration from '../../components/admin/MemoryModeration';
+import WeddingSettings from '../../components/admin/WeddingSettings';
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
@@ -16,6 +18,7 @@ export default function AdminDashboard() {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
   const [modalGuest, setModalGuest] = useState(undefined); // undefined: kapalı, null: yeni, obje: düzenle
 
   const weddingId = user?.wedding?.id || 1;
@@ -32,6 +35,14 @@ export default function AdminDashboard() {
   useEffect(() => {
     loadData().finally(() => setLoading(false));
   }, [weddingId]);
+
+  const copyInviteLink = (guest) => {
+    const slug = stats?.wedding_slug || 'elena-marco';
+    const link = `${window.location.origin}/${slug}/${guest.invite_token}`;
+    navigator.clipboard.writeText(link);
+    setCopiedId(guest.id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
 
   const handleSubmit = async (form) => {
     if (modalGuest) {
@@ -132,6 +143,7 @@ export default function AdminDashboard() {
                 <th className="px-4 py-3">Telefon</th>
                 <th className="px-4 py-3">Max Kişi</th>
                 <th className="px-4 py-3">Durum</th>
+                <th className="px-4 py-3">Davetiye</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -147,6 +159,14 @@ export default function AdminDashboard() {
                         ? 'Katılıyor'
                         : 'Katılmıyor'
                       : 'Bekliyor'}
+                  </td>
+                  <td className="px-4 py-3">
+                    <button
+                      onClick={() => copyInviteLink(guest)}
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      {copiedId === guest.id ? 'Kopyalandı ✓' : 'Linki Kopyala'}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-right space-x-3">
                     <button
@@ -167,7 +187,7 @@ export default function AdminDashboard() {
               {guests.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="px-4 py-6 text-center text-gray-400"
                   >
                     Henüz misafir eklenmemiş.
@@ -177,6 +197,8 @@ export default function AdminDashboard() {
             </tbody>
           </table>
         </div>
+        <MemoryModeration weddingId={weddingId} />
+        <WeddingSettings weddingId={weddingId} />
       </div>
 
       {modalGuest !== undefined && (

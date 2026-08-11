@@ -1,0 +1,142 @@
+import { useEffect, useState } from 'react';
+import {
+  getWeddingSettings,
+  updateWeddingSettings,
+  uploadCoverImage,
+} from '../../api/client';
+
+export default function WeddingSettings({ weddingId }) {
+  const [settings, setSettings] = useState(null);
+  const [colors, setColors] = useState({ primary: '', text: '', bg: '' });
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    getWeddingSettings(weddingId).then((data) => {
+      setSettings(data);
+      setColors(data.theme_colors || { primary: '', text: '', bg: '' });
+    });
+  }, [weddingId]);
+
+  const handleColorChange = (key, value) => {
+    setColors((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSaveColors = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      await updateWeddingSettings(weddingId, { theme_colors: colors });
+      setMessage('Renkler kaydedildi.');
+    } catch {
+      setMessage('Kaydetme sırasında hata oluştu.');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setMessage(''), 2000);
+    }
+  };
+
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const result = await uploadCoverImage(weddingId, file);
+      setSettings((prev) => ({ ...prev, cover_image: result.cover_image }));
+      // Görseli tekrar çekmek için ayarları yenile (cover_image_url için)
+      const fresh = await getWeddingSettings(weddingId);
+      setSettings(fresh);
+    } catch {
+      setMessage('Görsel yüklenirken hata oluştu.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (!settings) {
+    return (
+      <p className="text-sm text-gray-400 text-center py-6">Yükleniyor...</p>
+    );
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm p-4 space-y-6">
+      <h2 className="text-lg font-semibold">Tasarım Ayarları</h2>
+
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-2">Kapak Görseli</p>
+        {settings.cover_image_url && (
+          <img
+            src={settings.cover_image_url}
+            alt="Kapak"
+            className="w-full max-w-md h-48 object-cover rounded-lg mb-3"
+          />
+        )}
+        <label className="inline-block px-4 py-2 text-sm rounded-md border cursor-pointer hover:bg-gray-50">
+          {uploading ? 'Yükleniyor...' : 'Görsel Değiştir'}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleCoverUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-2">Renk Paleti</p>
+        <div className="grid grid-cols-3 gap-4 max-w-md">
+          <ColorField
+            label="Ana Renk"
+            value={colors.primary}
+            onChange={(v) => handleColorChange('primary', v)}
+          />
+          <ColorField
+            label="Yazı Rengi"
+            value={colors.text}
+            onChange={(v) => handleColorChange('text', v)}
+          />
+          <ColorField
+            label="Arka Plan"
+            value={colors.bg}
+            onChange={(v) => handleColorChange('bg', v)}
+          />
+        </div>
+
+        <button
+          onClick={handleSaveColors}
+          disabled={saving}
+          className="mt-4 px-4 py-2 text-sm rounded-md bg-[var(--color-primary,#d4a04a)] text-white disabled:opacity-50"
+        >
+          {saving ? 'Kaydediliyor...' : 'Renkleri Kaydet'}
+        </button>
+
+        {message && <p className="text-sm text-gray-500 mt-2">{message}</p>}
+      </div>
+    </div>
+  );
+}
+
+function ColorField({ label, value, onChange }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-gray-500">{label}</span>
+      <div className="mt-1 flex items-center gap-2">
+        <input
+          type="color"
+          value={value || '#000000'}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-10 h-10 rounded border cursor-pointer"
+        />
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border rounded-md px-2 py-1 text-sm"
+        />
+      </div>
+    </label>
+  );
+}

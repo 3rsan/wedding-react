@@ -91,3 +91,41 @@ export const exportGuests = (weddingId) =>
   api
     .get(`/admin/weddings/${weddingId}/export`, { responseType: 'blob' })
     .then((r) => r.data);
+
+export const getAdminMemories = (weddingId, status) =>
+  api
+    .get(`/admin/weddings/${weddingId}/memories`, {
+      params: status ? { status } : {},
+    })
+    .then((r) => r.data);
+
+export const approveMemory = (weddingId, memoryId) =>
+  api
+    .post(`/admin/weddings/${weddingId}/memories/${memoryId}/approve`)
+    .then((r) => r.data);
+
+export const rejectMemory = (weddingId, memoryId) =>
+  api
+    .post(`/admin/weddings/${weddingId}/memories/${memoryId}/reject`)
+    .then((r) => r.data);
+
+export const deleteMemory = (weddingId, memoryId) =>
+  api
+    .delete(`/admin/weddings/${weddingId}/memories/${memoryId}`)
+    .then((r) => r.data);
+
+export const getWeddingSettings = (weddingId) =>
+  api.get(`/admin/weddings/${weddingId}/settings`).then((r) => r.data);
+
+export const updateWeddingSettings = (weddingId, payload) =>
+  api.put(`/admin/weddings/${weddingId}/settings`, payload).then((r) => r.data);
+
+export const uploadCoverImage = (weddingId, file) => {
+  const formData = new FormData();
+  formData.append('cover_image', file);
+  return api
+    .post(`/admin/weddings/${weddingId}/settings/cover-image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => r.data);
+};
