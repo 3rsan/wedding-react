@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   getWeddingSettings,
   updateWeddingSettings,
@@ -11,26 +12,46 @@ export default function WeddingSettings({ weddingId }) {
   const [colors, setColors] = useState({ primary: '', text: '', bg: '' });
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('');
+  const [basicInfo, setBasicInfo] = useState({
+    groom_name: '',
+    bride_name: '',
+    wedding_date: '',
+  });
+  const [savingBasic, setSavingBasic] = useState(false);
 
   useEffect(() => {
     getWeddingSettings(weddingId).then((data) => {
       setSettings(data);
       setColors(data.theme_colors || { primary: '', text: '', bg: '' });
       setSelectedTheme(data.theme || 'classic');
+      setBasicInfo({
+        groom_name: data.groom_name || '',
+        bride_name: data.bride_name || '',
+        wedding_date: data.wedding_date ? data.wedding_date.slice(0, 10) : '',
+      });
     });
   }, [weddingId]);
+
+  const handleSaveBasicInfo = async () => {
+    setSavingBasic(true);
+    try {
+      await updateWeddingSettings(weddingId, basicInfo);
+      toast.success('Bilgiler kaydedildi.');
+    } catch {
+      toast.error('Kaydetme sırasında hata oluştu.');
+    } finally {
+      setSavingBasic(false);
+    }
+  };
 
   const handleThemeSelect = async (themeId) => {
     setSelectedTheme(themeId);
     try {
       await updateWeddingSettings(weddingId, { theme: themeId });
-      setMessage('Tema güncellendi.');
+      toast.success('Tema güncellendi.');
     } catch {
-      setMessage('Tema kaydedilirken hata oluştu.');
-    } finally {
-      setTimeout(() => setMessage(''), 2000);
+      toast.error('Tema kaydedilirken hata oluştu.');
     }
   };
 
@@ -40,15 +61,13 @@ export default function WeddingSettings({ weddingId }) {
 
   const handleSaveColors = async () => {
     setSaving(true);
-    setMessage('');
     try {
       await updateWeddingSettings(weddingId, { theme_colors: colors });
-      setMessage('Renkler kaydedildi.');
+      toast.success('Renkler kaydedildi.');
     } catch {
-      setMessage('Kaydetme sırasında hata oluştu.');
+      toast.error('Kaydetme sırasında hata oluştu.');
     } finally {
       setSaving(false);
-      setTimeout(() => setMessage(''), 2000);
     }
   };
 
@@ -57,13 +76,12 @@ export default function WeddingSettings({ weddingId }) {
     if (!file) return;
     setUploading(true);
     try {
-      const result = await uploadCoverImage(weddingId, file);
-      setSettings((prev) => ({ ...prev, cover_image: result.cover_image }));
-      // Görseli tekrar çekmek için ayarları yenile (cover_image_url için)
+      await uploadCoverImage(weddingId, file);
       const fresh = await getWeddingSettings(weddingId);
       setSettings(fresh);
+      toast.success('Kapak görseli güncellendi.');
     } catch {
-      setMessage('Görsel yüklenirken hata oluştu.');
+      toast.error('Görsel yüklenirken hata oluştu.');
     } finally {
       setUploading(false);
     }
@@ -78,6 +96,55 @@ export default function WeddingSettings({ weddingId }) {
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 space-y-6">
       <h2 className="text-lg font-semibold">Tasarım Ayarları</h2>
+
+      <div>
+        <p className="text-sm font-medium text-gray-700 mb-2">Temel Bilgiler</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl">
+          <label className="block">
+            <span className="text-xs text-gray-500">Gelin Adı</span>
+            <input
+              type="text"
+              value={basicInfo.bride_name}
+              onChange={(e) =>
+                setBasicInfo({ ...basicInfo, bride_name: e.target.value })
+              }
+              className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs text-gray-500">Damat Adı</span>
+            <input
+              type="text"
+              value={basicInfo.groom_name}
+              onChange={(e) =>
+                setBasicInfo({ ...basicInfo, groom_name: e.target.value })
+              }
+              className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+            />
+          </label>
+
+          <label className="block">
+            <span className="text-xs text-gray-500">Düğün Tarihi</span>
+            <input
+              type="date"
+              value={basicInfo.wedding_date}
+              onChange={(e) =>
+                setBasicInfo({ ...basicInfo, wedding_date: e.target.value })
+              }
+              className="mt-1 w-full border rounded-md px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+
+        <button
+          onClick={handleSaveBasicInfo}
+          disabled={savingBasic}
+          className="mt-4 px-4 py-2 text-sm rounded-md bg-[var(--color-primary,#d4a04a)] text-white disabled:opacity-50"
+        >
+          {savingBasic ? 'Kaydediliyor...' : 'Bilgileri Kaydet'}
+        </button>
+      </div>
 
       <div>
         <p className="text-sm font-medium text-gray-700 mb-2">Tema</p>
@@ -104,8 +171,8 @@ export default function WeddingSettings({ weddingId }) {
                     }}
                   >
                     <ThemeHero
-                      groomName="Marco"
-                      brideName="Elena"
+                      groomName="Ozan"
+                      brideName="Ceren"
                       weddingDate="2026-10-17"
                       heroVideo={null}
                       coverImageUrl={null}
@@ -167,8 +234,6 @@ export default function WeddingSettings({ weddingId }) {
         >
           {saving ? 'Kaydediliyor...' : 'Renkleri Kaydet'}
         </button>
-
-        {message && <p className="text-sm text-gray-500 mt-2">{message}</p>}
       </div>
     </div>
   );
