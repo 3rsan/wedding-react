@@ -93,7 +93,8 @@ export default function AdminDashboard() {
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">
-            Yönetim Paneli {user?.role === 'couple' && '— Elena & Marco'}
+            Yönetim Paneli
+            {stats && ` — ${stats.bride_name} & ${stats.groom_name}`}
           </h1>
           <button
             onClick={logout}
