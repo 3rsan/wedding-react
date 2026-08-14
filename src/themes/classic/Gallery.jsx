@@ -11,13 +11,36 @@ function MemoryCard({ memory }) {
           className="w-full h-44 object-cover rounded-lg mb-4"
         />
       )}
+      {memory.media_type === 'video' && memory.media_url && (
+        <video
+          src={memory.media_url}
+          controls
+          className="w-full h-44 object-cover rounded-lg mb-4"
+        />
+      )}
+      {memory.media_type === 'audio' && memory.media_url && (
+        <audio src={memory.media_url} controls className="w-full mb-4" />
+      )}
+
       <p className="font-medium text-base mb-1 text-[var(--color-text)]">
         {memory.first_name} {memory.last_name}
       </p>
       {memory.message && (
-        <p className="text-sm leading-relaxed text-[var(--color-text)]/60">
+        <p className="text-sm leading-relaxed text-[var(--color-text)]/60 mb-3">
           {memory.message}
         </p>
+      )}
+
+      {memory.media_url && (
+        <a
+          href={memory.media_url}
+          download
+          target="_blank"
+          rel="noreferrer"
+          className="inline-block text-xs font-medium text-[var(--color-primary)] hover:underline"
+        >
+          İndir
+        </a>
       )}
     </div>
   );

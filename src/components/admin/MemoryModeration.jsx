@@ -1,15 +1,18 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   getAdminMemories,
   approveMemory,
   rejectMemory,
   deleteMemory,
+  downloadAllMemories,
 } from '../../api/client';
 
 export default function MemoryModeration({ weddingId }) {
   const [memories, setMemories] = useState([]);
-  const [filter, setFilter] = useState('pending'); // 'pending' | 'approved' | 'all'
+  const [filter, setFilter] = useState('pending');
   const [loading, setLoading] = useState(true);
+  const [downloadingAll, setDownloadingAll] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -39,28 +42,56 @@ export default function MemoryModeration({ weddingId }) {
     load();
   };
 
+  const handleDownloadAll = async () => {
+    setDownloadingAll(true);
+    try {
+      const blob = await downloadAllMemories(weddingId);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'anilar.zip';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      toast.error('İndirme sırasında hata oluştu, medya olmayabilir.');
+    } finally {
+      setDownloadingAll(false);
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <h2 className="text-lg font-semibold">Anılar</h2>
-        <div className="flex gap-2 text-sm">
-          {['pending', 'approved', 'all'].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1 rounded-full ${
-                filter === f
-                  ? 'bg-[var(--color-primary,#d4a04a)] text-white'
-                  : 'bg-gray-100 text-gray-600'
-              }`}
-            >
-              {f === 'pending'
-                ? 'Bekleyen'
-                : f === 'approved'
-                  ? 'Onaylı'
-                  : 'Hepsi'}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex gap-2 text-sm">
+            {['pending', 'approved', 'all'].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-3 py-1 rounded-full ${
+                  filter === f
+                    ? 'bg-[var(--color-primary,#d4a04a)] text-white'
+                    : 'bg-gray-100 text-gray-600'
+                }`}
+              >
+                {f === 'pending'
+                  ? 'Bekleyen'
+                  : f === 'approved'
+                    ? 'Onaylı'
+                    : 'Hepsi'}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleDownloadAll}
+            disabled={downloadingAll}
+            className="text-sm px-3 py-1 rounded-md border disabled:opacity-50"
+          >
+            {downloadingAll ? 'Hazırlanıyor...' : 'Tümünü İndir (ZIP)'}
+          </button>
         </div>
       </div>
 
@@ -109,7 +140,7 @@ export default function MemoryModeration({ weddingId }) {
                   {memory.is_approved ? 'Onaylı' : 'Bekliyor'}
                 </p>
 
-                <div className="flex gap-2 pt-2">
+                <div className="flex gap-2 pt-2 flex-wrap">
                   {!memory.is_approved && (
                     <button
                       onClick={() => handleApprove(memory)}
@@ -125,6 +156,17 @@ export default function MemoryModeration({ weddingId }) {
                     >
                       Onayı Kaldır
                     </button>
+                  )}
+                  {memory.media_url && (
+                    <a
+                      href={memory.media_url}
+                      download
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700"
+                    >
+                      İndir
+                    </a>
                   )}
                   <button
                     onClick={() => handleDelete(memory)}

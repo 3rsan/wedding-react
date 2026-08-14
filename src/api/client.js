@@ -142,3 +142,8 @@ export const removeCoverImage = (weddingId) =>
 
 export const deleteWedding = (weddingId) =>
   api.delete(`/admin/weddings/${weddingId}`).then((r) => r.data);
+
+export const downloadAllMemories = (weddingId) =>
+  api
+    .get(`/admin/weddings/${weddingId}/memories/zip`, { responseType: 'blob' })
+    .then((r) => r.data);
