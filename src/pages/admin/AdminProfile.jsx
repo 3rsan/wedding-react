@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { updatePassword } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -12,6 +13,7 @@ export default function AdminProfile() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -19,12 +21,9 @@ export default function AdminProfile() {
     setSubmitting(true);
     try {
       await updatePassword(form);
-      toast.success('Şifreniz güncellendi.');
-      setForm({
-        current_password: '',
-        new_password: '',
-        new_password_confirmation: '',
-      });
+      toast.success('Şifreniz güncellendi, tekrar giriş yapın.');
+      localStorage.removeItem('admin_token');
+      navigate('/admin/login');
     } catch (err) {
       setError(
         err.response?.data?.errors?.current_password?.[0] ||

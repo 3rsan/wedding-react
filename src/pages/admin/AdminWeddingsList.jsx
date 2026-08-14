@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { getWeddings, createWedding, deleteWedding } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
@@ -60,12 +60,20 @@ export default function AdminWeddingsList() {
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Düğünler</h1>
-          <button
-            onClick={logout}
-            className="text-sm text-gray-500 hover:text-gray-800"
-          >
-            Çıkış Yap
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin/profile"
+              className="text-sm text-gray-500 hover:text-gray-800"
+            >
+              Profil
+            </Link>
+            <button
+              onClick={logout}
+              className="text-sm text-gray-500 hover:text-gray-800"
+            >
+              Çıkış Yap
+            </button>
+          </div>
         </div>
 
         <div className="flex justify-end">
