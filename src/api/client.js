@@ -147,3 +147,8 @@ export const downloadAllMemories = (weddingId) =>
   api
     .get(`/admin/weddings/${weddingId}/memories/zip`, { responseType: 'blob' })
     .then((r) => r.data);
+
+export const resetWeddingColors = (weddingId) =>
+  api
+    .post(`/admin/weddings/${weddingId}/settings/reset-colors`)
+    .then((r) => r.data);

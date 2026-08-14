@@ -5,6 +5,7 @@ import {
   updateWeddingSettings,
   uploadCoverImage,
   removeCoverImage,
+  resetWeddingColors,
 } from '../../api/client';
 import { THEME_LIST } from '../../themes/registry';
 
@@ -13,6 +14,7 @@ export default function WeddingSettings({ weddingId }) {
   const [colors, setColors] = useState({ primary: '', text: '', bg: '' });
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('');
   const [basicInfo, setBasicInfo] = useState({
@@ -104,6 +106,19 @@ export default function WeddingSettings({ weddingId }) {
       toast.error('Kaldırma sırasında hata oluştu.');
     } finally {
       setRemoving(false);
+    }
+  };
+
+  const handleResetColors = async () => {
+    setResetting(true);
+    try {
+      const result = await resetWeddingColors(weddingId);
+      setColors(result.theme_colors);
+      toast.success('Renkler orijinaline döndürüldü.');
+    } catch {
+      toast.error('Sıfırlama sırasında hata oluştu.');
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -258,13 +273,25 @@ export default function WeddingSettings({ weddingId }) {
           />
         </div>
 
-        <button
-          onClick={handleSaveColors}
-          disabled={saving}
-          className="mt-4 px-4 py-2 text-sm rounded-md bg-[var(--color-primary,#d4a04a)] text-white disabled:opacity-50"
-        >
-          {saving ? 'Kaydediliyor...' : 'Renkleri Kaydet'}
-        </button>
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={handleSaveColors}
+            disabled={saving}
+            className="px-4 py-2 text-sm rounded-md bg-[var(--color-primary,#d4a04a)] text-white disabled:opacity-50"
+          >
+            {saving ? 'Kaydediliyor...' : 'Renkleri Kaydet'}
+          </button>
+
+          {settings.default_theme_colors && (
+            <button
+              onClick={handleResetColors}
+              disabled={resetting}
+              className="px-4 py-2 text-sm rounded-md border disabled:opacity-50"
+            >
+              {resetting ? 'Sıfırlanıyor...' : 'Orijinale Sıfırla'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
