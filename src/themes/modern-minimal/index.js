@@ -8,13 +8,6 @@ import Countdown from '../classic/Countdown';
 export default {
   id: 'modern-minimal',
   name: 'Modern Minimal',
-  thumbnail: '/theme-previews/modern-minimal.jpg',
-  components: {
-    Envelope,
-    Hero,
-    Venues,
-    Gallery,
-    RsvpForm,
-    Countdown,
-  },
+  defaultColors: { primary: '#111111', text: '#111111', bg: '#ffffff' },
+  components: { Envelope, Hero, Venues, Gallery, RsvpForm, Countdown },
 };

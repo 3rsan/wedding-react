@@ -8,13 +8,6 @@ import Countdown from './Countdown';
 export default {
   id: 'classic',
   name: 'Klasik',
-  thumbnail: '', // şimdilik gerçek görsel yoksa boş bırakılabilir
-  components: {
-    Envelope,
-    Hero,
-    Venues,
-    Gallery,
-    RsvpForm,
-    Countdown,
-  },
+  defaultColors: { primary: '#d4a04a', text: '#2c3e50', bg: '#f7f3eb' },
+  components: { Envelope, Hero, Venues, Gallery, RsvpForm, Countdown },
 };

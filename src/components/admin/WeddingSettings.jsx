@@ -7,7 +7,7 @@ import {
   removeCoverImage,
   resetWeddingColors,
 } from '../../api/client';
-import { THEME_LIST } from '../../themes/registry';
+import { THEME_LIST, getTheme } from '../../themes/registry';
 
 export default function WeddingSettings({ weddingId }) {
   const [settings, setSettings] = useState(null);
@@ -51,9 +51,16 @@ export default function WeddingSettings({ weddingId }) {
 
   const handleThemeSelect = async (themeId) => {
     setSelectedTheme(themeId);
+    const theme = getTheme(themeId);
+    const newColors = theme.defaultColors || colors;
+
     try {
-      await updateWeddingSettings(weddingId, { theme: themeId });
-      toast.success('Tema güncellendi.');
+      await updateWeddingSettings(weddingId, {
+        theme: themeId,
+        theme_colors: newColors,
+      });
+      setColors(newColors);
+      toast.success('Tema ve renkler güncellendi.');
     } catch {
       toast.error('Tema kaydedilirken hata oluştu.');
     }
