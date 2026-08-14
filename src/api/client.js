@@ -155,3 +155,13 @@ export const resetWeddingColors = (weddingId) =>
 
 export const updatePassword = (payload) =>
   api.put('/admin/profile/password', payload).then((r) => r.data);
+
+export const importGuests = (weddingId, file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api
+    .post(`/admin/weddings/${weddingId}/guests/import`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((r) => r.data);
+};

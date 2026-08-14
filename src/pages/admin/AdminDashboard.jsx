@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import {
   getDashboard,
@@ -7,6 +7,7 @@ import {
   updateGuest,
   deleteGuest,
   exportGuests,
+  importGuests,
 } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import GuestFormModal from './GuestFormModal';
@@ -21,7 +22,9 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [modalGuest, setModalGuest] = useState(undefined); // undefined: kapalı, null: yeni, obje: düzenle
+  const [modalGuest, setModalGuest] = useState(undefined);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef(null);
 
   const weddingId = weddingIdParam || user?.wedding?.id;
 
@@ -65,6 +68,29 @@ export default function AdminDashboard() {
     await loadData();
   };
 
+  const handleImportFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const result = await importGuests(weddingId, file);
+      toast.success(
+        `${result.created} misafir eklendi.${result.skipped ? ` ${result.skipped} satır atlandı.` : ''}`,
+      );
+      if (result.errors?.length) {
+        result.errors.forEach((err) => toast.warning(err));
+      }
+      await loadData();
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message || 'İçe aktarma sırasında hata oluştu.',
+      );
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
   const handleExport = async () => {
     setExporting(true);
     try {
@@ -82,6 +108,22 @@ export default function AdminDashboard() {
     } finally {
       setExporting(false);
     }
+  };
+
+  const handleDownloadTemplate = () => {
+    const csvContent =
+      'display_name;phone;max_guests\nAhmet Yılmaz;05551234567;2\nFatma Kaya;;1\n';
+    const blob = new Blob(['\uFEFF' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'misafir-sablonu.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -134,7 +176,14 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
+          <button
+            onClick={handleDownloadTemplate}
+            className="px-4 py-2 text-sm rounded-md border disabled:opacity-50"
+          >
+            Şablon İndir
+          </button>
+
           <button
             onClick={handleExport}
             disabled={exporting}
@@ -142,6 +191,19 @@ export default function AdminDashboard() {
           >
             {exporting ? 'İndiriliyor...' : 'CSV Dışa Aktar'}
           </button>
+
+          <label className="px-4 py-2 text-sm rounded-md border cursor-pointer hover:bg-gray-50">
+            {importing ? 'Yükleniyor...' : 'CSV İçe Aktar'}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.txt"
+              onChange={handleImportFile}
+              disabled={importing}
+              className="hidden"
+            />
+          </label>
+
           <button
             onClick={() => setModalGuest(null)}
             className="px-4 py-2 text-sm rounded-md bg-[var(--color-primary,#d4a04a)] text-white"
@@ -149,6 +211,11 @@ export default function AdminDashboard() {
             + Misafir Ekle
           </button>
         </div>
+
+        <p className="text-xs text-gray-400 text-right">
+          CSV sütunları: <code>display_name; phone; max_guests</code> (Türkçe:{' '}
+          <code>isim; telefon; max kişi</code> de kabul edilir)
+        </p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <table className="w-full text-sm">
