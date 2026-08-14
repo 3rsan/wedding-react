@@ -159,10 +159,7 @@ export default function MemoryModeration({ weddingId }) {
                   )}
                   {memory.media_url && (
                     <a
-                      href={memory.media_url}
-                      download
-                      target="_blank"
-                      rel="noreferrer"
+                      href={`${memory.media_url}${memory.media_url.includes('?') ? '&' : '?'}download=1`}
                       className="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700"
                     >
                       İndir

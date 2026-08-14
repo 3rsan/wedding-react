@@ -33,10 +33,7 @@ function MemoryCard({ memory }) {
 
       {memory.media_url && (
         <a
-          href={memory.media_url}
-          download
-          target="_blank"
-          rel="noreferrer"
+          href={`${memory.media_url}${memory.media_url.includes('?') ? '&' : '?'}download=1`}
           className="inline-block text-xs font-medium text-[var(--color-primary)] hover:underline"
         >
           İndir
