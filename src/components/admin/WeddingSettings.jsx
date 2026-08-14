@@ -4,6 +4,7 @@ import {
   getWeddingSettings,
   updateWeddingSettings,
   uploadCoverImage,
+  removeCoverImage,
 } from '../../api/client';
 import { THEME_LIST } from '../../themes/registry';
 
@@ -11,6 +12,7 @@ export default function WeddingSettings({ weddingId }) {
   const [settings, setSettings] = useState(null);
   const [colors, setColors] = useState({ primary: '', text: '', bg: '' });
   const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('');
   const [basicInfo, setBasicInfo] = useState({
@@ -84,6 +86,24 @@ export default function WeddingSettings({ weddingId }) {
       toast.error('Görsel yüklenirken hata oluştu.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleRemoveCover = async () => {
+    if (!confirm('Kapak görselini kaldırmak istediğine emin misin?')) return;
+    setRemoving(true);
+    try {
+      await removeCoverImage(weddingId);
+      setSettings((prev) => ({
+        ...prev,
+        cover_image: null,
+        cover_image_url: null,
+      }));
+      toast.success('Kapak görseli kaldırıldı.');
+    } catch {
+      toast.error('Kaldırma sırasında hata oluştu.');
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -195,16 +215,27 @@ export default function WeddingSettings({ weddingId }) {
             className="w-full max-w-md h-48 object-cover rounded-lg mb-3"
           />
         )}
-        <label className="inline-block px-4 py-2 text-sm rounded-md border cursor-pointer hover:bg-gray-50">
-          {uploading ? 'Yükleniyor...' : 'Görsel Değiştir'}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleCoverUpload}
-            disabled={uploading}
-            className="hidden"
-          />
-        </label>
+        <div className="flex gap-2">
+          <label className="inline-block px-4 py-2 text-sm rounded-md border cursor-pointer hover:bg-gray-50">
+            {uploading ? 'Yükleniyor...' : 'Görsel Değiştir'}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleCoverUpload}
+              disabled={uploading}
+              className="hidden"
+            />
+          </label>
+          {settings.cover_image_url && (
+            <button
+              onClick={handleRemoveCover}
+              disabled={removing}
+              className="px-4 py-2 text-sm rounded-md border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-50"
+            >
+              {removing ? 'Kaldırılıyor...' : 'Görseli Kaldır'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div>

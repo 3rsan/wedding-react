@@ -134,3 +134,11 @@ export const getWeddings = () => api.get('/admin/weddings').then((r) => r.data);
 
 export const createWedding = (payload) =>
   api.post('/admin/weddings', payload).then((r) => r.data);
+
+export const removeCoverImage = (weddingId) =>
+  api
+    .delete(`/admin/weddings/${weddingId}/settings/cover-image`)
+    .then((r) => r.data);
+
+export const deleteWedding = (weddingId) =>
+  api.delete(`/admin/weddings/${weddingId}`).then((r) => r.data);

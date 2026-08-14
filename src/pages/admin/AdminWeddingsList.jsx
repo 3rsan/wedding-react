@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { getWeddings, createWedding } from '../../api/client';
+import { getWeddings, createWedding, deleteWedding } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function AdminWeddingsList() {
   const { logout } = useAdminAuth();
@@ -10,6 +11,7 @@ export default function AdminWeddingsList() {
   const [weddings, setWeddings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [weddingToDelete, setWeddingToDelete] = useState(null);
   const [createdCredentials, setCreatedCredentials] = useState(null);
 
   const load = () => {
@@ -34,6 +36,18 @@ export default function AdminWeddingsList() {
       toast.error(
         err.response?.data?.message || 'Oluşturma sırasında hata oluştu.',
       );
+    }
+  };
+
+  const handleDeleteWedding = async () => {
+    if (!weddingToDelete) return;
+    try {
+      await deleteWedding(weddingToDelete.id);
+      toast.success('Düğün silindi.');
+      setWeddingToDelete(null);
+      load();
+    } catch {
+      toast.error('Silme sırasında hata oluştu.');
     }
   };
 
@@ -85,12 +99,18 @@ export default function AdminWeddingsList() {
                     {new Date(w.wedding_date).toLocaleDateString('tr-TR')}
                   </td>
                   <td className="px-4 py-3">{w.guests_count ?? '—'}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right space-x-3">
                     <button
                       onClick={() => navigate(`/admin/weddings/${w.id}`)}
                       className="text-sm text-blue-600 hover:underline"
                     >
                       Yönet
+                    </button>
+                    <button
+                      onClick={() => setWeddingToDelete(w)}
+                      className="text-sm text-red-600 hover:underline"
+                    >
+                      Sil
                     </button>
                   </td>
                 </tr>
@@ -121,6 +141,17 @@ export default function AdminWeddingsList() {
         <CredentialsModal
           credentials={createdCredentials}
           onClose={() => setCreatedCredentials(null)}
+        />
+      )}
+
+      {weddingToDelete && (
+        <ConfirmDialog
+          title="Düğünü Sil"
+          description={`"${weddingToDelete.slug}" düğününü ve tüm misafir/RSVP/anı verilerini kalıcı olarak silmek üzeresin. Bu işlem geri alınamaz.`}
+          confirmLabel="Kalıcı Olarak Sil"
+          danger
+          onConfirm={handleDeleteWedding}
+          onCancel={() => setWeddingToDelete(null)}
         />
       )}
     </div>
