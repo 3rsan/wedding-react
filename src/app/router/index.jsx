@@ -6,6 +6,7 @@ import AdminLogin from '../../pages/AdminLogin';
 import AdminDashboard from '../../pages/admin/AdminDashboard';
 import AdminWeddingsList from '../../pages/admin/AdminWeddingsList';
 import WeddingInvite from '../../pages/WeddingInvite';
+import Landing from '../../pages/Landing';
 
 export default function AppRouter() {
   return (
@@ -13,11 +14,9 @@ export default function AppRouter() {
       <AdminAuthProvider>
         <Toaster position="top-right" richColors />
         <Routes>
-          <Route path="/:slug" element={<WeddingInvite />} />
-          <Route path="/:slug/:token" element={<WeddingInvite />} />
+          <Route path="/" element={<Landing />} />
 
           <Route path="/admin/login" element={<AdminLogin />} />
-
           <Route
             path="/admin/weddings"
             element={
@@ -34,7 +33,6 @@ export default function AppRouter() {
               </RequireAdminAuth>
             }
           />
-
           <Route
             path="/admin"
             element={
@@ -43,6 +41,10 @@ export default function AppRouter() {
               </RequireAdminAuth>
             }
           />
+
+          {/* Davetiye route'ları en sona alındı, /admin ve / ile çakışmasın diye */}
+          <Route path="/:slug" element={<WeddingInvite />} />
+          <Route path="/:slug/:token" element={<WeddingInvite />} />
         </Routes>
       </AdminAuthProvider>
     </BrowserRouter>
