@@ -152,3 +152,6 @@ export const resetWeddingColors = (weddingId) =>
   api
     .post(`/admin/weddings/${weddingId}/settings/reset-colors`)
     .then((r) => r.data);
+
+export const updatePassword = (payload) =>
+  api.put('/admin/profile/password', payload).then((r) => r.data);

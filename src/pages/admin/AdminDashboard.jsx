@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, Navigate } from 'react-router-dom';
+import { useParams, Navigate, Link } from 'react-router-dom';
 import {
   getDashboard,
   getGuests,
@@ -96,12 +96,20 @@ export default function AdminDashboard() {
             Yönetim Paneli
             {stats && ` — ${stats.bride_name} & ${stats.groom_name}`}
           </h1>
-          <button
-            onClick={logout}
-            className="text-sm text-gray-500 hover:text-gray-800"
-          >
-            Çıkış Yap
-          </button>
+          <div className="flex items-center gap-3">
+            <Link
+              to="/admin/profile"
+              className="text-sm text-gray-500 hover:text-gray-800"
+            >
+              Profil
+            </Link>
+            <button
+              onClick={logout}
+              className="text-sm text-gray-500 hover:text-gray-800"
+            >
+              Çıkış Yap
+            </button>
+          </div>
         </div>
 
         {stats && (
