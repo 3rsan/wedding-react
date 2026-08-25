@@ -86,55 +86,57 @@ export default function AdminWeddingsList() {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-4 py-3">Slug</th>
-                <th className="px-4 py-3">Gelin & Damat</th>
-                <th className="px-4 py-3">Tarih</th>
-                <th className="px-4 py-3">Misafir Sayısı</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {weddings.map((w) => (
-                <tr key={w.id} className="border-t">
-                  <td className="px-4 py-3">{w.slug}</td>
-                  <td className="px-4 py-3">
-                    {w.bride_name} & {w.groom_name}
-                  </td>
-                  <td className="px-4 py-3">
-                    {new Date(w.wedding_date).toLocaleDateString('tr-TR')}
-                  </td>
-                  <td className="px-4 py-3">{w.guests_count ?? '—'}</td>
-                  <td className="px-4 py-3 text-right space-x-3">
-                    <button
-                      onClick={() => navigate(`/admin/weddings/${w.id}`)}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Yönet
-                    </button>
-                    <button
-                      onClick={() => setWeddingToDelete(w)}
-                      className="text-sm text-red-600 hover:underline"
-                    >
-                      Sil
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {weddings.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[600px]">
+              <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>
-                  <td
-                    colSpan={5}
-                    className="px-4 py-6 text-center text-gray-400"
-                  >
-                    Henüz düğün oluşturulmamış.
-                  </td>
+                  <th className="px-4 py-3">Slug</th>
+                  <th className="px-4 py-3">Gelin & Damat</th>
+                  <th className="px-4 py-3">Tarih</th>
+                  <th className="px-4 py-3">Misafir Sayısı</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {weddings.map((w) => (
+                  <tr key={w.id} className="border-t">
+                    <td className="px-4 py-3">{w.slug}</td>
+                    <td className="px-4 py-3">
+                      {w.bride_name} & {w.groom_name}
+                    </td>
+                    <td className="px-4 py-3">
+                      {new Date(w.wedding_date).toLocaleDateString('tr-TR')}
+                    </td>
+                    <td className="px-4 py-3">{w.guests_count ?? '—'}</td>
+                    <td className="px-4 py-3 text-right space-x-3 whitespace-nowrap">
+                      <button
+                        onClick={() => navigate(`/admin/weddings/${w.id}`)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Yönet
+                      </button>
+                      <button
+                        onClick={() => setWeddingToDelete(w)}
+                        className="text-sm text-red-600 hover:underline"
+                      >
+                        Sil
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {weddings.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-4 py-6 text-center text-gray-400"
+                    >
+                      Henüz düğün oluşturulmamış.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

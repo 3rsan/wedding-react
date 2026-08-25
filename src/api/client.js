@@ -165,3 +165,8 @@ export const importGuests = (weddingId, file) => {
     })
     .then((r) => r.data);
 };
+
+export const toggleInviteSent = (weddingId, guestId) =>
+  api
+    .post(`/admin/weddings/${weddingId}/guests/${guestId}/toggle-sent`)
+    .then((r) => r.data);

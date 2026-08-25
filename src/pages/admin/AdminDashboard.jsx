@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   getDashboard,
   getGuests,
@@ -8,11 +9,13 @@ import {
   deleteGuest,
   exportGuests,
   importGuests,
+  toggleInviteSent,
 } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import GuestFormModal from './GuestFormModal';
 import MemoryModeration from '../../components/admin/MemoryModeration';
 import WeddingSettings from '../../components/admin/WeddingSettings';
+import ConfirmDialog from '../../components/admin/ConfirmDialog';
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
@@ -25,6 +28,8 @@ export default function AdminDashboard() {
   const [modalGuest, setModalGuest] = useState(undefined);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef(null);
+  const [guestToUnmark, setGuestToUnmark] = useState(null);
+  const [guestToDelete, setGuestToDelete] = useState(null);
 
   const weddingId = weddingIdParam || user?.wedding?.id;
 
@@ -39,6 +44,29 @@ export default function AdminDashboard() {
         setGuests(guestsData);
       },
     );
+  };
+
+  const buildWhatsAppLink = (guest) => {
+    const slug = stats?.wedding_slug || 'elena-marco';
+    const inviteLink = `${window.location.origin}/${slug}/${guest.invite_token}`;
+    const message = `Merhaba ${guest.display_name}, düğünümüze davetlisiniz! Detaylar ve katılım bildirimi için: ${inviteLink}`;
+
+    let phone = (guest.phone || '').replace(/\D/g, '');
+    if (phone.startsWith('0')) phone = '9' + phone;
+    else if (!phone.startsWith('90')) phone = '90' + phone;
+
+    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  };
+
+  const handleToggleSent = async (guest) => {
+    await toggleInviteSent(weddingId, guest.id);
+    await loadData();
+  };
+
+  const handleConfirmUnmark = async () => {
+    if (!guestToUnmark) return;
+    await handleToggleSent(guestToUnmark);
+    setGuestToUnmark(null);
   };
 
   useEffect(() => {
@@ -62,9 +90,10 @@ export default function AdminDashboard() {
     await loadData();
   };
 
-  const handleDelete = async (guest) => {
-    if (!confirm(`${guest.display_name} silinsin mi?`)) return;
-    await deleteGuest(weddingId, guest.id);
+  const handleConfirmDelete = async () => {
+    if (!guestToDelete) return;
+    await deleteGuest(weddingId, guestToDelete.id);
+    setGuestToDelete(null);
     await loadData();
   };
 
@@ -104,7 +133,7 @@ export default function AdminDashboard() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
-      alert('Export sırasında bir hata oluştu.');
+      toast.error('Export sırasında bir hata oluştu.');
     } finally {
       setExporting(false);
     }
@@ -131,10 +160,10 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg,#f7f3eb)] p-6">
+    <div className="min-h-screen bg-[var(--color-bg,#f7f3eb)] p-4 md:p-6">
       <div className="max-w-5xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <h1 className="text-xl md:text-2xl font-semibold">
             Yönetim Paneli
             {stats && ` — ${stats.bride_name} & ${stats.groom_name}`}
           </h1>
@@ -155,7 +184,7 @@ export default function AdminDashboard() {
         </div>
 
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
             <StatCard label="Toplam Davetli" value={stats.total_invited} />
             <StatCard
               label="Katılıyor"
@@ -176,7 +205,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <button
             onClick={handleDownloadTemplate}
             className="px-4 py-2 text-sm rounded-md border disabled:opacity-50"
@@ -218,66 +247,105 @@ export default function AdminDashboard() {
         </p>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-gray-500">
-              <tr>
-                <th className="px-4 py-3">İsim</th>
-                <th className="px-4 py-3">Telefon</th>
-                <th className="px-4 py-3">Max Kişi</th>
-                <th className="px-4 py-3">Durum</th>
-                <th className="px-4 py-3">Davetiye</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {guests.map((guest) => (
-                <tr key={guest.id} className="border-t">
-                  <td className="px-4 py-3">{guest.display_name}</td>
-                  <td className="px-4 py-3">{guest.phone || '—'}</td>
-                  <td className="px-4 py-3">{guest.max_guests}</td>
-                  <td className="px-4 py-3">
-                    {guest.rsvps?.length
-                      ? guest.rsvps[guest.rsvps.length - 1].attending
-                        ? 'Katılıyor'
-                        : 'Katılmıyor'
-                      : 'Bekliyor'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => copyInviteLink(guest)}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      {copiedId === guest.id ? 'Kopyalandı ✓' : 'Linki Kopyala'}
-                    </button>
-                  </td>
-                  <td className="px-4 py-3 text-right space-x-3">
-                    <button
-                      onClick={() => setModalGuest(guest)}
-                      className="text-sm text-blue-600 hover:underline"
-                    >
-                      Düzenle
-                    </button>
-                    <button
-                      onClick={() => handleDelete(guest)}
-                      className="text-sm text-red-600 hover:underline"
-                    >
-                      Sil
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {guests.length === 0 && (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[900px]">
+              <thead className="bg-gray-50 text-left text-gray-500">
                 <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-6 text-center text-gray-400"
-                  >
-                    Henüz misafir eklenmemiş.
-                  </td>
+                  <th className="px-4 py-3">İsim</th>
+                  <th className="px-4 py-3">Telefon</th>
+                  <th className="px-4 py-3">Max Kişi</th>
+                  <th className="px-4 py-3">Durum</th>
+                  <th className="px-4 py-3">Davetiye</th>
+                  <th className="px-4 py-3">WhatsApp</th>
+                  <th className="px-4 py-3"></th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {guests.map((guest) => (
+                  <tr key={guest.id} className="border-t">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {guest.display_name}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {guest.phone || '—'}
+                    </td>
+                    <td className="px-4 py-3">{guest.max_guests}</td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {guest.rsvps?.length
+                        ? guest.rsvps[guest.rsvps.length - 1].attending
+                          ? 'Katılıyor'
+                          : 'Katılmıyor'
+                        : 'Bekliyor'}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <button
+                        onClick={() => copyInviteLink(guest)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        {copiedId === guest.id
+                          ? 'Kopyalandı ✓'
+                          : 'Linki Kopyala'}
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {guest.phone ? (
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={buildWhatsAppLink(guest)}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() => {
+                              if (!guest.invite_sent_at)
+                                handleToggleSent(guest);
+                            }}
+                            className="text-sm text-green-600 hover:underline"
+                          >
+                            Gönder
+                          </a>
+                          {guest.invite_sent_at && (
+                            <button
+                              onClick={() => setGuestToUnmark(guest)}
+                              className="text-xs text-gray-400 hover:text-red-500"
+                              title={`Gönderildi: ${new Date(guest.invite_sent_at).toLocaleString('tr-TR')}`}
+                            >
+                              ✓ Gönderildi
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-xs text-gray-400">Tel. yok</span>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-3 text-right space-x-3 whitespace-nowrap">
+                      <button
+                        onClick={() => setModalGuest(guest)}
+                        className="text-sm text-blue-600 hover:underline"
+                      >
+                        Düzenle
+                      </button>
+                      <button
+                        onClick={() => setGuestToDelete(guest)}
+                        className="text-sm text-red-600 hover:underline"
+                      >
+                        Sil
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {guests.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-4 py-6 text-center text-gray-400"
+                    >
+                      Henüz misafir eklenmemiş.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
         <MemoryModeration weddingId={weddingId} />
         <WeddingSettings weddingId={weddingId} />
@@ -290,15 +358,37 @@ export default function AdminDashboard() {
           onSubmit={handleSubmit}
         />
       )}
+
+      {guestToUnmark && (
+        <ConfirmDialog
+          title="Gönderim İşaretini Kaldır"
+          description={`${guestToUnmark.display_name} için "gönderildi" işaretini kaldırmak istediğine emin misin?`}
+          confirmLabel="İşareti Kaldır"
+          danger
+          onConfirm={handleConfirmUnmark}
+          onCancel={() => setGuestToUnmark(null)}
+        />
+      )}
+
+      {guestToDelete && (
+        <ConfirmDialog
+          title="Misafiri Sil"
+          description={`${guestToDelete.display_name} silinsin mi?`}
+          confirmLabel="Sil"
+          danger
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setGuestToDelete(null)}
+        />
+      )}
     </div>
   );
 }
 
 function StatCard({ label, value, color = 'text-gray-800' }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm p-4">
+    <div className="bg-white rounded-xl shadow-sm p-3 md:p-4">
       <p className="text-xs text-gray-500">{label}</p>
-      <p className={`text-2xl font-semibold ${color}`}>{value}</p>
+      <p className={`text-xl md:text-2xl font-semibold ${color}`}>{value}</p>
     </div>
   );
 }
