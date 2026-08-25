@@ -10,12 +10,14 @@ import {
   exportGuests,
   importGuests,
   toggleInviteSent,
+  getWeddingSettings,
 } from '../../api/client';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import GuestFormModal from './GuestFormModal';
 import MemoryModeration from '../../components/admin/MemoryModeration';
 import WeddingSettings from '../../components/admin/WeddingSettings';
 import ConfirmDialog from '../../components/admin/ConfirmDialog';
+import VenuesEditor from '../../components/admin/VenuesEditor';
 
 export default function AdminDashboard() {
   const { user, logout } = useAdminAuth();
@@ -30,6 +32,7 @@ export default function AdminDashboard() {
   const fileInputRef = useRef(null);
   const [guestToUnmark, setGuestToUnmark] = useState(null);
   const [guestToDelete, setGuestToDelete] = useState(null);
+  const [settings, setSettings] = useState(null);
 
   const weddingId = weddingIdParam || user?.wedding?.id;
 
@@ -38,12 +41,15 @@ export default function AdminDashboard() {
   }
 
   const loadData = () => {
-    return Promise.all([getDashboard(weddingId), getGuests(weddingId)]).then(
-      ([dashboardData, guestsData]) => {
-        setStats(dashboardData);
-        setGuests(guestsData);
-      },
-    );
+    return Promise.all([
+      getDashboard(weddingId),
+      getGuests(weddingId),
+      getWeddingSettings(weddingId),
+    ]).then(([dashboardData, guestsData, settingsData]) => {
+      setStats(dashboardData);
+      setGuests(guestsData);
+      setSettings(settingsData);
+    });
   };
 
   const buildWhatsAppLink = (guest) => {
@@ -348,7 +354,22 @@ export default function AdminDashboard() {
           </div>
         </div>
         <MemoryModeration weddingId={weddingId} />
-        <WeddingSettings weddingId={weddingId} />
+        {settings && (
+          <WeddingSettings
+            weddingId={weddingId}
+            settings={settings}
+            onUpdated={(updated) => setSettings(updated)}
+            onRefresh={loadData}
+          />
+        )}
+
+        {settings && (
+          <VenuesEditor
+            weddingId={weddingId}
+            venues={settings.venues}
+            onUpdated={(venues) => setSettings((prev) => ({ ...prev, venues }))}
+          />
+        )}
       </div>
 
       {modalGuest !== undefined && (

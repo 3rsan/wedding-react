@@ -1,9 +1,15 @@
-function mapsSearchUrl(address) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`
+function mapsSearchUrl(venue) {
+  if (venue.lat && venue.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`;
 }
 
-function mapsDirectionsUrl(address) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`
+function mapsDirectionsUrl(venue) {
+  if (venue.lat && venue.lng) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${venue.lat},${venue.lng}`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`;
 }
 
 // Tek bir mekan kartı
@@ -17,14 +23,16 @@ function VenueCard({ venue }) {
         {venue.name}
       </h3>
       {venue.time && (
-        <p className="text-2xl font-light mb-4 text-[var(--color-primary)]">{venue.time}</p>
+        <p className="text-2xl font-light mb-4 text-[var(--color-primary)]">
+          {venue.time}
+        </p>
       )}
       <div className="flex items-center justify-center gap-2 mb-6 text-[var(--color-text)]/60 text-sm">
         <span>{venue.address}</span>
       </div>
 
       <a
-        href={mapsSearchUrl(venue.address)}
+        href={mapsSearchUrl(venue)}
         target="_blank"
         rel="noopener noreferrer"
         className="flex flex-col items-center justify-center gap-2 w-full rounded-xl h-48 border border-[var(--color-text)]/10 bg-white text-[var(--color-text)]/60 mb-6"
@@ -33,7 +41,7 @@ function VenueCard({ venue }) {
       </a>
 
       <a
-        href={mapsDirectionsUrl(venue.address)}
+        href={mapsDirectionsUrl(venue)}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-2 px-8 py-3 rounded-full text-sm text-white transition-transform hover:scale-105"
@@ -42,12 +50,12 @@ function VenueCard({ venue }) {
         Yol Tarifi Al
       </a>
     </div>
-  )
+  );
 }
 
 // venues: [{ type: 'nikah', label: 'Nikah Töreni', name: 'Hotel Caruso', address: '...', time: '15:30' }, ...]
 export default function Venues({ venues }) {
-  if (!venues || venues.length === 0) return null
+  if (!venues || venues.length === 0) return null;
 
   return (
     <section className="py-12 px-4 bg-[var(--color-bg)]">
@@ -55,5 +63,5 @@ export default function Venues({ venues }) {
         <VenueCard key={venue.type ?? i} venue={venue} />
       ))}
     </section>
-  )
+  );
 }

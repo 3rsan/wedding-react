@@ -1,46 +1,47 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
-  getWeddingSettings,
   updateWeddingSettings,
   uploadCoverImage,
   removeCoverImage,
   resetWeddingColors,
 } from '../../api/client';
 import { THEME_LIST, getTheme } from '../../themes/registry';
+import PreviewModal from './PreviewModal';
 
-export default function WeddingSettings({ weddingId }) {
-  const [settings, setSettings] = useState(null);
-  const [colors, setColors] = useState({ primary: '', text: '', bg: '' });
+export default function WeddingSettings({
+  weddingId,
+  settings,
+  onUpdated,
+  onRefresh,
+}) {
+  const [colors, setColors] = useState(
+    settings.theme_colors || { primary: '', text: '', bg: '' },
+  );
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [resetting, setResetting] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [selectedTheme, setSelectedTheme] = useState('');
+  const [selectedTheme, setSelectedTheme] = useState(
+    settings.theme || 'classic',
+  );
   const [basicInfo, setBasicInfo] = useState({
-    groom_name: '',
-    bride_name: '',
-    wedding_date: '',
+    groom_name: settings.groom_name || '',
+    bride_name: settings.bride_name || '',
+    wedding_date: settings.wedding_date
+      ? settings.wedding_date.slice(0, 10)
+      : '',
   });
   const [savingBasic, setSavingBasic] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
-  useEffect(() => {
-    getWeddingSettings(weddingId).then((data) => {
-      setSettings(data);
-      setColors(data.theme_colors || { primary: '', text: '', bg: '' });
-      setSelectedTheme(data.theme || 'classic');
-      setBasicInfo({
-        groom_name: data.groom_name || '',
-        bride_name: data.bride_name || '',
-        wedding_date: data.wedding_date ? data.wedding_date.slice(0, 10) : '',
-      });
-    });
-  }, [weddingId]);
+  const previewUrl = `${window.location.origin}/${settings.slug}`;
 
   const handleSaveBasicInfo = async () => {
     setSavingBasic(true);
     try {
-      await updateWeddingSettings(weddingId, basicInfo);
+      const result = await updateWeddingSettings(weddingId, basicInfo);
+      onUpdated({ ...settings, ...basicInfo });
       toast.success('Bilgiler kaydedildi.');
     } catch {
       toast.error('Kaydetme sırasında hata oluştu.');
@@ -60,6 +61,7 @@ export default function WeddingSettings({ weddingId }) {
         theme_colors: newColors,
       });
       setColors(newColors);
+      onUpdated({ ...settings, theme: themeId, theme_colors: newColors });
       toast.success('Tema ve renkler güncellendi.');
     } catch {
       toast.error('Tema kaydedilirken hata oluştu.');
@@ -74,6 +76,7 @@ export default function WeddingSettings({ weddingId }) {
     setSaving(true);
     try {
       await updateWeddingSettings(weddingId, { theme_colors: colors });
+      onUpdated({ ...settings, theme_colors: colors });
       toast.success('Renkler kaydedildi.');
     } catch {
       toast.error('Kaydetme sırasında hata oluştu.');
@@ -88,8 +91,7 @@ export default function WeddingSettings({ weddingId }) {
     setUploading(true);
     try {
       await uploadCoverImage(weddingId, file);
-      const fresh = await getWeddingSettings(weddingId);
-      setSettings(fresh);
+      onRefresh();
       toast.success('Kapak görseli güncellendi.');
     } catch {
       toast.error('Görsel yüklenirken hata oluştu.');
@@ -103,11 +105,7 @@ export default function WeddingSettings({ weddingId }) {
     setRemoving(true);
     try {
       await removeCoverImage(weddingId);
-      setSettings((prev) => ({
-        ...prev,
-        cover_image: null,
-        cover_image_url: null,
-      }));
+      onUpdated({ ...settings, cover_image: null, cover_image_url: null });
       toast.success('Kapak görseli kaldırıldı.');
     } catch {
       toast.error('Kaldırma sırasında hata oluştu.');
@@ -121,6 +119,7 @@ export default function WeddingSettings({ weddingId }) {
     try {
       const result = await resetWeddingColors(weddingId);
       setColors(result.theme_colors);
+      onUpdated({ ...settings, theme_colors: result.theme_colors });
       toast.success('Renkler orijinaline döndürüldü.');
     } catch {
       toast.error('Sıfırlama sırasında hata oluştu.');
@@ -129,15 +128,17 @@ export default function WeddingSettings({ weddingId }) {
     }
   };
 
-  if (!settings) {
-    return (
-      <p className="text-sm text-gray-400 text-center py-6">Yükleniyor...</p>
-    );
-  }
-
   return (
     <div className="bg-white rounded-xl shadow-sm p-4 space-y-6">
-      <h2 className="text-lg font-semibold">Tasarım Ayarları</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Tasarım Ayarları</h2>
+        <button
+          onClick={() => setShowPreview(true)}
+          className="px-4 py-2 text-sm rounded-md border hover:bg-gray-50"
+        >
+          Davetiyeyi Önizle
+        </button>
+      </div>
 
       <div>
         <p className="text-sm font-medium text-gray-700 mb-2">Temel Bilgiler</p>
@@ -262,7 +263,7 @@ export default function WeddingSettings({ weddingId }) {
 
       <div>
         <p className="text-sm font-medium text-gray-700 mb-2">Renk Paleti</p>
-        <div className="grid grid-cols-3 gap-4 max-w-md">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-md">
           <ColorField
             label="Ana Renk"
             value={colors.primary}
@@ -280,7 +281,7 @@ export default function WeddingSettings({ weddingId }) {
           />
         </div>
 
-        <div className="flex gap-2 mt-4">
+        <div className="flex flex-wrap gap-2 mt-4">
           <button
             onClick={handleSaveColors}
             disabled={saving}
@@ -300,6 +301,10 @@ export default function WeddingSettings({ weddingId }) {
           )}
         </div>
       </div>
+
+      {showPreview && (
+        <PreviewModal url={previewUrl} onClose={() => setShowPreview(false)} />
+      )}
     </div>
   );
 }
