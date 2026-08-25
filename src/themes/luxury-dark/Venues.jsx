@@ -1,9 +1,15 @@
-function mapsSearchUrl(address) {
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+function mapsSearchUrl(venue) {
+  if (venue.lat && venue.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${venue.lat},${venue.lng}`;
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(venue.address)}`;
 }
 
-function mapsDirectionsUrl(address) {
-  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+function mapsDirectionsUrl(venue) {
+  if (venue.lat && venue.lng) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${venue.lat},${venue.lng}`;
+  }
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(venue.address)}`;
 }
 
 function VenueCard({ venue }) {
@@ -26,7 +32,7 @@ function VenueCard({ venue }) {
       <p className="text-sm mb-8 text-white/60">{venue.address}</p>
 
       <a
-        href={mapsSearchUrl(venue.address)}
+        href={mapsSearchUrl(venue)}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center justify-center w-full h-40 border mb-6 text-sm text-white/50"
@@ -36,7 +42,7 @@ function VenueCard({ venue }) {
       </a>
 
       <a
-        href={mapsDirectionsUrl(venue.address)}
+        href={mapsDirectionsUrl(venue)}
         target="_blank"
         rel="noopener noreferrer"
         className="inline-block px-8 py-3 text-xs tracking-widest uppercase border"
