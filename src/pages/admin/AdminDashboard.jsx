@@ -353,7 +353,7 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
-        <MemoryModeration weddingId={weddingId} />
+
         {settings && (
           <WeddingSettings
             weddingId={weddingId}
@@ -370,6 +370,8 @@ export default function AdminDashboard() {
             onUpdated={(venues) => setSettings((prev) => ({ ...prev, venues }))}
           />
         )}
+
+        <MemoryModeration weddingId={weddingId} />
       </div>
 
       {modalGuest !== undefined && (
