@@ -3,6 +3,7 @@ import modernMinimal from './modern-minimal';
 import vintage from './vintage';
 import botanical from './botanical';
 import luxuryDark from './luxury-dark';
+import editorial from './editorial';
 
 export const THEMES = {
   classic,
@@ -10,6 +11,7 @@ export const THEMES = {
   vintage,
   botanical,
   'luxury-dark': luxuryDark,
+  editorial,
 };
 
 export const THEME_LIST = Object.values(THEMES);

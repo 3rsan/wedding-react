@@ -65,6 +65,7 @@ export default function WeddingInvite() {
             weddingDate={wedding.wedding_date}
             heroVideo={wedding.hero_video}
             coverImageUrl={wedding.cover_image_url}
+            venue={wedding.venues?.[0]}
           />
 
           <Countdown weddingDate={wedding.wedding_date} />
